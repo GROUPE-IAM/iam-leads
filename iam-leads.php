@@ -3,7 +3,7 @@
  * Plugin Name:       IAM Leads
  * Plugin URI:        https://groupeiam.com
  * Description:       Système de génération et de gestion de leads pour le Groupe IAM : constructeur de formulaires, capture UTM, téléchargement de plaquette, tableau de bord, CRM et notifications WhatsApp.
- * Version:           1.8.0
+ * Version:           1.8.1
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Update URI:        https://github.com/SofianeKOINDA/iam-leads
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'IAM_LEADS_VERSION', '1.8.0' );
+define( 'IAM_LEADS_VERSION', '1.8.1' );
 define( 'IAM_LEADS_FILE', __FILE__ );
 define( 'IAM_LEADS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'IAM_LEADS_URL', plugin_dir_url( __FILE__ ) );
@@ -169,6 +169,20 @@ function iam_leads_synchroniser() {
 			$reglages['plaquettes'] = $connues;
 			update_option( 'iam_leads_settings', $reglages );
 		}
+	}
+
+	// Avant la 1.8.0, « HubSpot » était le CRM par défaut et s'enregistrait avec
+	// les réglages même sans jeton : le site restait bloqué sur HubSpot après
+	// la mise à jour. Sans jeton HubSpot, on bascule une fois sur IAM CRM.
+	if ( ! get_option( 'iam_leads_crm_bascule_181' ) ) {
+		$reglages = (array) get_option( 'iam_leads_settings', array() );
+
+		if ( 'hubspot' === ( $reglages['crm_fournisseur'] ?? '' ) && '' === trim( (string) ( $reglages['hubspot_token'] ?? '' ) ) ) {
+			$reglages['crm_fournisseur'] = 'iam_crm';
+			update_option( 'iam_leads_settings', $reglages );
+		}
+
+		update_option( 'iam_leads_crm_bascule_181', 1, false );
 	}
 
 	// Le schéma ou les intitulés ont pu changer : les agrégats en cache ne sont plus fiables.

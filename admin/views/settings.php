@@ -223,7 +223,7 @@ $m = 'IAM_Leads_Admin_Menu';
 				<div class="iam-fields" data-crm-pour="iam_crm">
 					<div class="iam-field">
 						<label class="iam-field__label" for="iam_crm_url"><?php esc_html_e( 'Adresse du CRM', 'iam-leads' ); ?></label>
-						<input type="url" id="iam_crm_url" name="iam_crm_url" placeholder="https://crm.groupeiam.com" value="<?php echo esc_attr( $reglages['iam_crm_url'] ?? '' ); ?>">
+						<input type="url" id="iam_crm_url" name="iam_crm_url" placeholder="https://crm.groupeiam.sn" value="<?php echo esc_attr( $reglages['iam_crm_url'] ?? '' ); ?>">
 						<p class="iam-field__hint">
 							<?php if ( IAM_Leads_CRM_IamCrm::endpoint() ) : ?>
 								<?php esc_html_e( 'Les leads partent vers :', 'iam-leads' ); ?> <code><?php echo esc_html( IAM_Leads_CRM_IamCrm::endpoint() ); ?></code>
@@ -233,9 +233,9 @@ $m = 'IAM_Leads_Admin_Menu';
 						</p>
 					</div>
 					<div class="iam-field">
-						<label class="iam-field__label" for="iam_crm_token"><?php esc_html_e( 'Clé API', 'iam-leads' ); ?></label>
+						<label class="iam-field__label" for="iam_crm_token"><?php esc_html_e( 'Jeton d\'API', 'iam-leads' ); ?></label>
 						<input type="password" id="iam_crm_token" name="iam_crm_token" autocomplete="new-password" placeholder="<?php echo ! empty( $reglages['iam_crm_token'] ) ? esc_attr__( '•••••••• (enregistrée)', 'iam-leads' ) : ''; ?>" value="">
-						<p class="iam-field__hint"><?php esc_html_e( 'La valeur de IAM_LEADS_API_KEY sur le serveur du CRM. Laissez vide pour garder la clé enregistrée.', 'iam-leads' ); ?></p>
+						<p class="iam-field__hint"><?php esc_html_e( 'Le jeton iam_… remis par le CRM (portée leads:write). L\'ancienne clé IAM_LEADS_API_KEY reste acceptée. Laissez vide pour garder le jeton enregistré.', 'iam-leads' ); ?></p>
 					</div>
 				</div>
 

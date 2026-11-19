@@ -343,10 +343,14 @@ class IAM_Leads_CRM_Integration {
 		if ( $attendu === $code ) {
 			$resultat['ok']      = true;
 			$resultat['message'] = __( 'Connexion réussie : le CRM a accepté la clé.', 'iam-leads' );
-		} elseif ( 401 === $code || 403 === $code ) {
-			$resultat['message'] = __( 'Le CRM répond, mais refuse la clé API (401).', 'iam-leads' );
+		} elseif ( 401 === $code ) {
+			$resultat['message'] = __( 'Le CRM refuse le jeton (401) : jeton inconnu, expiré ou révoqué.', 'iam-leads' );
+		} elseif ( 403 === $code ) {
+			$resultat['message'] = __( 'Jeton reconnu mais refusé (403) : portée leads:write absente, application ou fonction « leads » désactivée, ou adresse IP non autorisée.', 'iam-leads' );
 		} elseif ( 404 === $code ) {
-			$resultat['message'] = __( 'Adresse introuvable (404) : vérifiez l\'adresse du CRM.', 'iam-leads' );
+			$resultat['message'] = __( 'Adresse introuvable (404) : vérifiez l\'adresse du CRM, ou demandez l\'activation du module API.', 'iam-leads' );
+		} elseif ( 429 === $code ) {
+			$resultat['message'] = __( 'Trop de requêtes (429) : réessayez dans une minute.', 'iam-leads' );
 		} else {
 			$resultat['message'] = sprintf(
 				/* translators: %d : code HTTP */
@@ -391,7 +395,7 @@ class IAM_Leads_CRM_Integration {
 	 * Retourne le fournisseur actif.
 	 */
 	public static function fournisseur_actif() {
-		$id = IAM_Leads::get_setting( 'crm_fournisseur', 'hubspot' );
+		$id = IAM_Leads::get_setting( 'crm_fournisseur', 'iam_crm' );
 
 		foreach ( self::fournisseurs() as $fournisseur ) {
 			if ( $fournisseur->id() === $id ) {

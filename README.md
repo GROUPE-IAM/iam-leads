@@ -2,7 +2,7 @@
 
 Plugin WordPress de génération et de gestion de leads pour le Groupe IAM.
 
-- **Version** : 1.9.0
+- **Version** : 1.9.1
 - **Prérequis** : WordPress 6.0+, PHP 8.0+
 - **Contexte** : thème Univet (RSTheme), builder Elementor, stack Docker + Nginx + WordPress FPM + MySQL 8.0
 
@@ -427,6 +427,10 @@ Le plugin se met à jour depuis les **Releases** du dépôt
    mise à jour, tables et synchronisations sont rejouées au premier passage dans l'admin.
 
 ## Journal des versions
+
+### 1.9.1
+
+- **Formulaire « IAM Incoming Exchange nomination form » créé à la mise à jour** (une seule fois, option `iam_leads_form_exchange`) : les 8 colonnes du fichier des partenaires (Gender, Last Name, First Name, Student's Email Address, Program and level of study, Home Institution, Exchange coordinator Name / Email), tous obligatoires. Le Fact Sheet 2026/2027, livré dans `assets/docs/`, est importé dans la médiathèque et joint à l'accusé de réception, en anglais, envoyé à l'adresse de l'étudiant. Supprimé ensuite, le formulaire n'est pas recréé.
 
 ### 1.9.0
 

@@ -599,4 +599,153 @@ class IAM_Leads_Form_Builder {
 			)
 		);
 	}
+
+	/**
+	 * Crée une seule fois le formulaire « IAM Incoming Exchange nomination
+	 * form » (colonnes du fichier .ods des partenaires), avec le Fact Sheet
+	 * 2026/2027 livré dans le plugin, importé dans la médiathèque et joint
+	 * à l'accusé de réception en anglais.
+	 *
+	 * Rejoué à chaque mise à jour mais sans effet une fois fait : l'option
+	 * iam_leads_form_exchange garde l'identifiant du formulaire créé. S'il a
+	 * été supprimé depuis, il n'est pas recréé.
+	 */
+	public static function seed_exchange_form() {
+		global $wpdb;
+
+		if ( get_option( 'iam_leads_form_exchange' ) ) {
+			return;
+		}
+
+		$champs = array(
+			array(
+				'type'     => 'select',
+				'label'    => 'Gender',
+				'name'     => 'gender',
+				'required' => 1,
+				'width'    => 'half',
+				'options'  => array( 'M', 'F' ),
+			),
+			array(
+				'type'     => 'text',
+				'label'    => 'Last Name',
+				'name'     => 'last_name',
+				'required' => 1,
+				'width'    => 'half',
+				'mapping'  => 'nom',
+			),
+			array(
+				'type'     => 'text',
+				'label'    => 'First Name',
+				'name'     => 'first_name',
+				'required' => 1,
+				'width'    => 'half',
+				'mapping'  => 'prenom',
+			),
+			array(
+				'type'     => 'email',
+				'label'    => 'Student\'s Email Address',
+				'name'     => 'student_email',
+				'required' => 1,
+				'width'    => 'half',
+				'mapping'  => 'email',
+			),
+			array(
+				'type'     => 'text',
+				'label'    => 'Program and level of study at Home University',
+				'name'     => 'program_level',
+				'required' => 1,
+				'width'    => 'full',
+			),
+			array(
+				'type'     => 'text',
+				'label'    => 'Home Institution',
+				'name'     => 'home_institution',
+				'required' => 1,
+				'width'    => 'full',
+			),
+			array(
+				'type'     => 'text',
+				'label'    => 'Exchange coordinator Name',
+				'name'     => 'coordinator_name',
+				'required' => 1,
+				'width'    => 'half',
+			),
+			array(
+				'type'     => 'email',
+				'label'    => 'Exchange coordinator Email',
+				'name'     => 'coordinator_email',
+				'required' => 1,
+				'width'    => 'half',
+			),
+		);
+
+		$reglages = array_merge(
+			self::default_reglages(),
+			array(
+				'bouton_precedent'   => 'Back',
+				'bouton_suivant'     => 'Next',
+				'joindre_plaquette'  => 1,
+				'langue_emails'      => 'en',
+				'objet_confirmation' => 'IAM Business School Dakar — Fact Sheet 2026/2027',
+			)
+		);
+
+		$ok = $wpdb->insert( // phpcs:ignore
+			self::table(),
+			array(
+				'nom'                  => 'IAM Incoming Exchange nomination form',
+				'champs'               => wp_json_encode( self::sanitize_fields( array_map( static function ( $champ ) { return $champ + array( 'mapping' => '' ); }, $champs ) ) ),
+				'reglages'             => wp_json_encode( $reglages ),
+				'bouton_texte'         => 'Submit the nomination',
+				'message_confirmation' => 'Thank you, your nomination has been received. Our international relations team will get back to you shortly. The IAM Business School Fact Sheet 2026/2027 has been sent to your e-mail address.',
+				'plaquette_pdf'        => self::importer_fact_sheet(),
+				'programme'            => '',
+				'date_creation'        => current_time( 'mysql' ),
+			)
+		);
+
+		if ( $ok ) {
+			update_option( 'iam_leads_form_exchange', (int) $wpdb->insert_id, false );
+		}
+	}
+
+	/**
+	 * Copie le Fact Sheet livré dans le plugin vers la médiathèque.
+	 *
+	 * @return int Identifiant de la pièce, 0 en cas d'échec.
+	 */
+	private static function importer_fact_sheet() {
+		$source = IAM_LEADS_PATH . 'assets/docs/iam-dakar-fact-sheet-2026-2027.pdf';
+
+		if ( ! is_readable( $source ) ) {
+			return 0;
+		}
+
+		$envoi = wp_upload_bits( 'IAM-Dakar-Fact-Sheet-2026-2027.pdf', null, (string) file_get_contents( $source ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+
+		if ( ! empty( $envoi['error'] ) ) {
+			IAM_Leads_Logger::ajouter( 'formulaire', 'echec', 'Fact Sheet non importé dans la médiathèque : ' . $envoi['error'] );
+
+			return 0;
+		}
+
+		$piece_id = wp_insert_attachment(
+			array(
+				'post_mime_type' => 'application/pdf',
+				'post_title'     => 'IAM Dakar — Fact Sheet 2026/2027',
+				'post_status'    => 'inherit',
+			),
+			$envoi['file']
+		);
+
+		if ( ! $piece_id || is_wp_error( $piece_id ) ) {
+			return 0;
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		wp_update_attachment_metadata( $piece_id, wp_generate_attachment_metadata( $piece_id, $envoi['file'] ) );
+
+		return (int) $piece_id;
+	}
 }

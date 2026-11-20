@@ -23,9 +23,10 @@ class IAM_Leads_Emails {
 	 * @param string       $corps         Corps HTML.
 	 * @param string       $etiquette     Intitulé pour le journal.
 	 * @param int          $lead_id       Lead concerné.
+	 * @param string[]     $pieces        Chemins des pièces jointes.
 	 * @return bool
 	 */
-	private static function envoyer( $destinataires, $sujet, $corps, $etiquette, $lead_id = 0 ) {
+	private static function envoyer( $destinataires, $sujet, $corps, $etiquette, $lead_id = 0, $pieces = array() ) {
 		$detail = '';
 
 		$capture = static function ( $erreur ) use ( &$detail ) {
@@ -33,13 +34,14 @@ class IAM_Leads_Emails {
 		};
 
 		add_action( 'wp_mail_failed', $capture );
-		$envoye = wp_mail( $destinataires, $sujet, $corps, self::entetes() );
+		$envoye = wp_mail( $destinataires, $sujet, $corps, self::entetes(), $pieces );
 		remove_action( 'wp_mail_failed', $capture );
 
 		$adresses = implode( ', ', (array) $destinataires );
 
 		if ( $envoye ) {
-			IAM_Leads_Logger::ajouter( 'email', 'succes', sprintf( '%1$s envoyé à %2$s.', $etiquette, $adresses ), $lead_id );
+			$joint = $pieces ? ' Pièce jointe : ' . implode( ', ', array_map( 'basename', $pieces ) ) . '.' : '';
+			IAM_Leads_Logger::ajouter( 'email', 'succes', sprintf( '%1$s envoyé à %2$s.%3$s', $etiquette, $adresses, $joint ), $lead_id );
 
 			return true;
 		}
@@ -314,21 +316,84 @@ class IAM_Leads_Emails {
 			return false;
 		}
 
-		$sujet = __( 'Votre demande d\'information — Groupe IAM', 'iam-leads' );
+		$reglages = $form && is_array( $form->reglages ?? null ) ? $form->reglages : array();
+		$anglais  = 'en' === ( $reglages['langue_emails'] ?? 'fr' );
+
+		$textes = $anglais
+			? array(
+				'objet'    => 'Your submission — IAM Business School',
+				'bonjour'  => 'Dear',
+				'defaut'   => 'We have received your submission.',
+				'recap'    => 'Summary of your submission:',
+				'joint'    => 'Please find our brochure attached.',
+				'signe'    => 'IAM Business School — Institut Africain de Management',
+			)
+			: array(
+				'objet'    => __( 'Votre demande d\'information — Groupe IAM', 'iam-leads' ),
+				'bonjour'  => __( 'Bonjour', 'iam-leads' ),
+				'defaut'   => __( 'Nous avons bien reçu votre demande.', 'iam-leads' ),
+				'recap'    => __( 'Récapitulatif de votre demande :', 'iam-leads' ),
+				'joint'    => __( 'Vous trouverez notre plaquette en pièce jointe.', 'iam-leads' ),
+				'signe'    => 'Groupe IAM — Institut Africain de Management',
+			);
+
+		$sujet  = '' !== trim( (string) ( $reglages['objet_confirmation'] ?? '' ) ) ? $reglages['objet_confirmation'] : $textes['objet'];
+		$pieces = ! empty( $reglages['joindre_plaquette'] ) ? self::plaquette_jointe( $lead, $form ) : array();
 
 		$corps  = '<p style="font-family:Arial,sans-serif;font-size:15px;">';
-		$corps .= esc_html__( 'Bonjour', 'iam-leads' ) . ( $lead->nom_complet ? ' ' . esc_html( $lead->nom_complet ) : '' ) . ',</p>';
+		$corps .= esc_html( $textes['bonjour'] ) . ( $lead->nom_complet ? ' ' . esc_html( $lead->nom_complet ) : '' ) . ',</p>';
 		$corps .= '<p style="font-family:Arial,sans-serif;font-size:15px;">';
-		$corps .= wp_kses_post( $form->message_confirmation ? $form->message_confirmation : __( 'Nous avons bien reçu votre demande.', 'iam-leads' ) );
+		$corps .= wp_kses_post( $form->message_confirmation ? $form->message_confirmation : $textes['defaut'] );
 		$corps .= '</p>';
-		$corps .= '<p style="font-family:Arial,sans-serif;font-size:15px;">' . esc_html__( 'Récapitulatif de votre demande :', 'iam-leads' ) . '</p>';
+		if ( $pieces ) {
+			$corps .= '<p style="font-family:Arial,sans-serif;font-size:15px;">' . esc_html( $textes['joint'] ) . '</p>';
+		}
+		$corps .= '<p style="font-family:Arial,sans-serif;font-size:15px;">' . esc_html( $textes['recap'] ) . '</p>';
 		$corps .= self::tableau_reponses( $lead );
 		$corps .= '<p style="font-family:Arial,sans-serif;font-size:13px;color:#555;margin-top:20px;">';
-		$corps .= 'Groupe IAM — Institut Africain de Management<br>';
+		$corps .= esc_html( $textes['signe'] ) . '<br>';
 		$corps .= '+221 33 869 36 36 / +221 77 698 39 66<br>';
 		$corps .= 'info@groupeiam.com — www.groupeiam.com';
 		$corps .= '</p>';
 
-		return self::envoyer( $lead->email, $sujet, $corps, __( 'Accusé de réception', 'iam-leads' ), (int) $lead->id );
+		return self::envoyer( $lead->email, $sujet, $corps, __( 'Accusé de réception', 'iam-leads' ), (int) $lead->id, $pieces );
+	}
+
+	/**
+	 * Fichier de la plaquette à joindre à l'accusé de réception. Écarté
+	 * (et tracé) s'il manque sur le disque ou dépasse 10 Mo : au-delà,
+	 * beaucoup de messageries refusent le message entier.
+	 *
+	 * @param object $lead Lead.
+	 * @param object $form Formulaire.
+	 * @return string[]
+	 */
+	private static function plaquette_jointe( $lead, $form ) {
+		$piece_id = IAM_Leads_Form_Renderer::piece_plaquette( $lead, $form );
+		$chemin   = $piece_id ? get_attached_file( $piece_id ) : '';
+
+		if ( ! $chemin || ! is_readable( $chemin ) ) {
+			IAM_Leads_Logger::ajouter(
+				'email',
+				'echec',
+				__( 'Plaquette non jointe : aucun PDF n\'est choisi pour ce formulaire, ou le fichier est introuvable.', 'iam-leads' ),
+				(int) $lead->id
+			);
+
+			return array();
+		}
+
+		if ( filesize( $chemin ) > 10 * MB_IN_BYTES ) {
+			IAM_Leads_Logger::ajouter(
+				'email',
+				'echec',
+				sprintf( 'Plaquette non jointe : %s dépasse 10 Mo.', basename( $chemin ) ),
+				(int) $lead->id
+			);
+
+			return array();
+		}
+
+		return array( $chemin );
 	}
 }

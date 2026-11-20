@@ -2,7 +2,7 @@
 
 Plugin WordPress de génération et de gestion de leads pour le Groupe IAM.
 
-- **Version** : 1.8.1
+- **Version** : 1.9.0
 - **Prérequis** : WordPress 6.0+, PHP 8.0+
 - **Contexte** : thème Univet (RSTheme), builder Elementor, stack Docker + Nginx + WordPress FPM + MySQL 8.0
 
@@ -427,6 +427,16 @@ Le plugin se met à jour depuis les **Releases** du dépôt
    mise à jour, tables et synchronisations sont rejouées au premier passage dans l'admin.
 
 ## Journal des versions
+
+### 1.9.0
+
+- **Plaquette jointe à l'accusé de réception** : nouvel interrupteur par formulaire (Après l'envoi → « Joindre la plaquette (PDF) à l'accusé de réception »). Le PDF joint est celui du programme choisi, sinon la plaquette par défaut du formulaire. Fichier absent ou de plus de 10 Mo : e-mail envoyé sans pièce jointe, avec une ligne au journal.
+- **Langue de l'accusé de réception** (français ou anglais) et **objet personnalisé**, par formulaire. En anglais, le lien de téléchargement affiché après l'envoi l'est aussi.
+
+### 1.8.2
+- Adresse du CRM : seuls le protocole et l'hôte comptent. `https://crm.groupeiam.sn/api/v1` (adresse du guide développeur) n'envoie plus vers une route introuvable (404).
+- Jeton : espaces, retours à la ligne, guillemets et préfixe `Bearer` / `Authorization:` collés avec lui sont retirés à l'enregistrement et à l'envoi. Les gestionnaires de mots de passe ne doivent plus remplir le champ.
+- Réglages → CRM affiche le début du jeton enregistré et sa longueur (`iam_xxxxxxxx… (44 caractères)`), à comparer avec le début affiché par le CRM ; le message d'erreur 401 le rappelle.
 
 ### 1.8.1
 - **Correctif « bloqué sur HubSpot »** : avant la 1.8.0, HubSpot était le CRM par défaut et restait enregistré après la mise à jour, ce qui masquait les champs IAM CRM. À la mise à jour, un site réglé sur HubSpot **sans jeton HubSpot** passe une fois sur IAM CRM (un HubSpot réellement configuré n'est pas touché).

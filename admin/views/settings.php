@@ -234,8 +234,11 @@ $m = 'IAM_Leads_Admin_Menu';
 					</div>
 					<div class="iam-field">
 						<label class="iam-field__label" for="iam_crm_token"><?php esc_html_e( 'Jeton d\'API', 'iam-leads' ); ?></label>
-						<input type="password" id="iam_crm_token" name="iam_crm_token" autocomplete="new-password" placeholder="<?php echo ! empty( $reglages['iam_crm_token'] ) ? esc_attr__( '•••••••• (enregistrée)', 'iam-leads' ) : ''; ?>" value="">
-						<p class="iam-field__hint"><?php esc_html_e( 'Le jeton iam_… remis par le CRM (portée leads:write). L\'ancienne clé IAM_LEADS_API_KEY reste acceptée. Laissez vide pour garder le jeton enregistré.', 'iam-leads' ); ?></p>
+						<input type="password" id="iam_crm_token" name="iam_crm_token" autocomplete="new-password" placeholder="<?php echo ! empty( $reglages['iam_crm_token'] ) ? esc_attr__( '•••••••• (enregistré)', 'iam-leads' ) : 'iam_…'; ?>" value="" data-lpignore="true" data-1p-ignore>
+						<p class="iam-field__hint"><?php esc_html_e( 'Le jeton iam_… remis par le CRM (portée leads:write). L\'ancienne clé IAM_LEADS_API_KEY reste acceptée. Laissez vide pour garder le jeton enregistré.', 'iam-leads' ); ?>
+							<?php if ( IAM_Leads_CRM_IamCrm::empreinte_jeton() ) : ?>
+								<br><?php esc_html_e( 'Jeton enregistré :', 'iam-leads' ); ?> <code><?php echo esc_html( IAM_Leads_CRM_IamCrm::empreinte_jeton() ); ?></code>
+							<?php endif; ?></p>
 					</div>
 				</div>
 

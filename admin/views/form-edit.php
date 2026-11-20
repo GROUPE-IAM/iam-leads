@@ -157,6 +157,21 @@ if ( ! $est_nouveau ) {
 							</div>
 							<p class="iam-field__hint"><?php esc_html_e( 'Repli si le programme choisi n\'a pas sa propre plaquette (Réglages → Plaquettes).', 'iam-leads' ); ?></p>
 						</div>
+						<?php echo $m::interrupteur( 'reglages[joindre_plaquette]', ! empty( $reglages['joindre_plaquette'] ), __( 'Joindre la plaquette (PDF) à l\'accusé de réception envoyé au visiteur', 'iam-leads' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<div class="iam-fields">
+							<div class="iam-field">
+								<label class="iam-field__label" for="iam-langue-emails"><?php esc_html_e( 'Langue de l\'accusé de réception', 'iam-leads' ); ?></label>
+								<select id="iam-langue-emails" name="reglages[langue_emails]">
+									<option value="fr" <?php selected( $reglages['langue_emails'] ?? 'fr', 'fr' ); ?>><?php esc_html_e( 'Français', 'iam-leads' ); ?></option>
+									<option value="en" <?php selected( $reglages['langue_emails'] ?? 'fr', 'en' ); ?>><?php esc_html_e( 'Anglais', 'iam-leads' ); ?></option>
+								</select>
+							</div>
+							<div class="iam-field">
+								<label class="iam-field__label" for="iam-objet-confirmation"><?php esc_html_e( 'Objet de l\'accusé de réception', 'iam-leads' ); ?></label>
+								<input type="text" id="iam-objet-confirmation" name="reglages[objet_confirmation]" value="<?php echo esc_attr( $reglages['objet_confirmation'] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Votre demande d\'information — Groupe IAM', 'iam-leads' ); ?>">
+							</div>
+						</div>
+						<p class="iam-field__hint"><?php esc_html_e( 'L\'accusé de réception part seulement si l\'option est cochée dans Réglages → E-mails et si un champ porte la correspondance « E-mail ».', 'iam-leads' ); ?></p>
 					</div>
 				</section>
 

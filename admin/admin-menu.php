@@ -397,7 +397,7 @@ class IAM_Leads_Admin_Menu {
 			'iam_crm_url'            => esc_url_raw( wp_unslash( $_POST['iam_crm_url'] ?? '' ) ),
 			// Comme le mot de passe SMTP : vide = on garde la clé déjà enregistrée, jamais réaffichée.
 			'iam_crm_token'          => '' !== ( $_POST['iam_crm_token'] ?? '' )
-				? sanitize_text_field( wp_unslash( $_POST['iam_crm_token'] ) )
+				? IAM_Leads_CRM_IamCrm::nettoyer_jeton( sanitize_text_field( wp_unslash( $_POST['iam_crm_token'] ) ) )
 				: (string) IAM_Leads::get_setting( 'iam_crm_token' ),
 			'hubspot_token'          => sanitize_text_field( wp_unslash( $_POST['hubspot_token'] ?? '' ) ),
 			'whatsapp_active'        => empty( $_POST['whatsapp_active'] ) ? 0 : 1,

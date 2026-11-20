@@ -148,25 +148,76 @@ class IAM_Leads_CRM_IamCrm extends IAM_Leads_CRM_Fournisseur {
 		return 'IAM CRM';
 	}
 
-	/** Adresse complète de l'endpoint, construite depuis l'URL saisie dans les réglages. */
+	/**
+	 * Adresse complète de l'endpoint. Seuls le protocole, l'hôte et le port de
+	 * l'adresse saisie comptent : « https://crm.groupeiam.sn/api/v1 » (adresse
+	 * du guide développeur) donne la même chose que « https://crm.groupeiam.sn ».
+	 */
 	public static function endpoint() {
-		$base = untrailingslashit( trim( (string) IAM_Leads::get_setting( 'iam_crm_url' ) ) );
+		$saisie = trim( (string) IAM_Leads::get_setting( 'iam_crm_url' ) );
 
-		if ( '' === $base ) {
+		if ( '' === $saisie ) {
 			return '';
 		}
 
-		// On accepte « https://crm.groupeiam.com » comme « https://crm.groupeiam.com/api ».
-		if ( ! preg_match( '#/api$#', $base ) ) {
-			$base .= '/api';
+		if ( ! preg_match( '#^https?://#i', $saisie ) ) {
+			$saisie = 'https://' . $saisie;
 		}
 
-		return $base . '/integrations/iam-leads';
+		$morceaux = wp_parse_url( $saisie );
+
+		if ( empty( $morceaux['host'] ) ) {
+			return '';
+		}
+
+		$base = strtolower( $morceaux['scheme'] ?? 'https' ) . '://' . $morceaux['host'] . ( isset( $morceaux['port'] ) ? ':' . (int) $morceaux['port'] : '' );
+
+		return $base . '/api/integrations/iam-leads';
+	}
+
+	/**
+	 * Nettoie un jeton collé : espaces, retours à la ligne, guillemets et
+	 * préfixe « Bearer » / « Authorization: » copiés avec lui.
+	 *
+	 * @param string $brut Valeur collée.
+	 * @return string
+	 */
+	public static function nettoyer_jeton( $brut ) {
+		$jeton = trim( (string) $brut, " \t\n\r\0\x0B\"'`" );
+		$jeton = preg_replace( '#^(authorization\s*:\s*)?bearer\s+#i', '', $jeton );
+
+		return preg_replace( '#\s+#', '', (string) $jeton );
+	}
+
+	/** Jeton enregistré, nettoyé. */
+	public static function jeton() {
+		return self::nettoyer_jeton( (string) IAM_Leads::get_setting( 'iam_crm_token' ) );
+	}
+
+	/**
+	 * Début du jeton enregistré, comme le CRM l'affiche (12 caractères), et sa
+	 * longueur : de quoi comparer sans révéler le jeton.
+	 *
+	 * @return string
+	 */
+	public static function empreinte_jeton() {
+		$jeton = self::jeton();
+
+		if ( '' === $jeton ) {
+			return '';
+		}
+
+		return sprintf(
+			/* translators: 1 : début du jeton, 2 : nombre de caractères */
+			__( '%1$s… (%2$d caractères)', 'iam-leads' ),
+			substr( $jeton, 0, 12 ),
+			strlen( $jeton )
+		);
 	}
 
 	public function envoyer( $lead ) {
 		$url   = self::endpoint();
-		$token = trim( (string) IAM_Leads::get_setting( 'iam_crm_token' ) );
+		$token = IAM_Leads_CRM_IamCrm::jeton();
 
 		if ( '' === $url || '' === $token ) {
 			return new WP_Error( 'iam_crm_config', __( 'IAM CRM : URL ou clé API absente dans les réglages.', 'iam-leads' ) );
@@ -307,7 +358,7 @@ class IAM_Leads_CRM_Integration {
 			$attendu = 200;
 		} else {
 			$url   = IAM_Leads_CRM_IamCrm::endpoint();
-			$token = trim( (string) IAM_Leads::get_setting( 'iam_crm_token' ) );
+			$token = IAM_Leads_CRM_IamCrm::jeton();
 
 			if ( '' === $url || '' === $token ) {
 				$resultat['message'] = __( 'Renseignez l\'adresse du CRM et la clé API, puis enregistrez.', 'iam-leads' );
@@ -344,7 +395,11 @@ class IAM_Leads_CRM_Integration {
 			$resultat['ok']      = true;
 			$resultat['message'] = __( 'Connexion réussie : le CRM a accepté la clé.', 'iam-leads' );
 		} elseif ( 401 === $code ) {
-			$resultat['message'] = __( 'Le CRM refuse le jeton (401) : jeton inconnu, expiré ou révoqué.', 'iam-leads' );
+			$resultat['message'] = sprintf(
+				/* translators: %s : début du jeton enregistré */
+				__( 'Le CRM refuse le jeton (401) : jeton inconnu, expiré ou révoqué. Jeton enregistré : %s ; comparez son début avec celui affiché par le CRM (Intégrations → API). Un jeton iam_ fait 44 caractères.', 'iam-leads' ),
+				IAM_Leads_CRM_IamCrm::empreinte_jeton()
+			);
 		} elseif ( 403 === $code ) {
 			$resultat['message'] = __( 'Jeton reconnu mais refusé (403) : portée leads:write absente, application ou fonction « leads » désactivée, ou adresse IP non autorisée.', 'iam-leads' );
 		} elseif ( 404 === $code ) {

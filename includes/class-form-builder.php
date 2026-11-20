@@ -56,6 +56,11 @@ class IAM_Leads_Form_Builder {
 			'destinataires'        => '',
 			// Avec des destinataires propres : prévenir aussi ceux par défaut.
 			'copie_defaut'         => 0,
+
+			// Accusé de réception : plaquette en pièce jointe, langue, objet.
+			'joindre_plaquette'    => 0,
+			'langue_emails'        => 'fr',
+			'objet_confirmation'   => '',
 		);
 	}
 
@@ -246,6 +251,9 @@ class IAM_Leads_Form_Builder {
 			'couleur_bouton_texte' => self::couleur( $reglages['couleur_bouton_texte'] ?? '' ),
 			'destinataires'        => implode( ', ', self::adresses( $reglages['destinataires'] ?? '' ) ),
 			'copie_defaut'         => empty( $reglages['copie_defaut'] ) ? 0 : 1,
+			'joindre_plaquette'    => empty( $reglages['joindre_plaquette'] ) ? 0 : 1,
+			'langue_emails'        => 'en' === ( $reglages['langue_emails'] ?? '' ) ? 'en' : 'fr',
+			'objet_confirmation'   => sanitize_text_field( $reglages['objet_confirmation'] ?? '' ),
 		);
 
 		$payload = array(

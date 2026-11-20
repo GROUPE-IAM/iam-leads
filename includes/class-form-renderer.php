@@ -531,43 +531,54 @@ class IAM_Leads_Form_Renderer {
 	}
 
 	/**
+	 * Identifiant (médiathèque) de la plaquette d'un lead : celle de son
+	 * programme (Réglages → Plaquettes), sinon celle du formulaire, sinon 0.
+	 * Partagé par le lien de téléchargement et la pièce jointe de l'e-mail.
+	 *
+	 * @param object $lead Lead.
+	 * @param object $form Formulaire.
+	 * @return int
+	 */
+	public static function piece_plaquette( $lead, $form ) {
+		$plaquettes = (array) IAM_Leads::get_setting( 'plaquettes', array() );
+		$programme  = $lead->programme;
+
+		if ( $programme && ! empty( $plaquettes[ $programme ] ) ) {
+			return absint( $plaquettes[ $programme ] );
+		}
+
+		return ! empty( $form->plaquette_pdf ) ? absint( $form->plaquette_pdf ) : 0;
+	}
+
+	/**
 	 * Retourne la plaquette correspondant au programme choisi.
 	 */
 	private function plaquette_pour( $lead, $form ) {
-		$plaquettes = (array) IAM_Leads::get_setting( 'plaquettes', array() );
-		$programme  = $lead->programme;
-		$piece_id   = 0;
-
-		if ( $programme && ! empty( $plaquettes[ $programme ] ) ) {
-			$piece_id = absint( $plaquettes[ $programme ] );
-		} elseif ( ! empty( $form->plaquette_pdf ) ) {
-			$piece_id = absint( $form->plaquette_pdf );
-		}
-
-		if ( ! $piece_id ) {
-			return array(
-				'disponible' => false,
-				'message'    => __( 'Notre équipe vous contactera sous 48h.', 'iam-leads' ),
-			);
-		}
-
-		$url = wp_get_attachment_url( $piece_id );
+		$programme = $lead->programme;
+		$piece_id  = self::piece_plaquette( $lead, $form );
+		$anglais   = 'en' === ( $form->reglages['langue_emails'] ?? 'fr' );
+		$url       = $piece_id ? wp_get_attachment_url( $piece_id ) : '';
 
 		if ( ! $url ) {
 			return array(
 				'disponible' => false,
-				'message'    => __( 'Notre équipe vous contactera sous 48h.', 'iam-leads' ),
+				'message'    => $anglais ? 'Our team will get back to you within 48 hours.' : __( 'Notre équipe vous contactera sous 48h.', 'iam-leads' ),
 			);
+		}
+
+		$nom = $programme ? $programme : $form->programme;
+
+		if ( $anglais ) {
+			$libelle = $nom ? sprintf( 'Download the brochure — %s', $nom ) : 'Download the brochure';
+		} else {
+			/* translators: %s : nom du programme */
+			$libelle = sprintf( __( 'Télécharger la plaquette — %s', 'iam-leads' ), $nom );
 		}
 
 		return array(
 			'disponible' => true,
 			'url'        => $url,
-			'libelle'    => sprintf(
-				/* translators: %s : nom du programme */
-				__( 'Télécharger la plaquette — %s', 'iam-leads' ),
-				$programme ? $programme : $form->programme
-			),
+			'libelle'    => $libelle,
 		);
 	}
 }

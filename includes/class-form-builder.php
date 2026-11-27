@@ -378,20 +378,33 @@ class IAM_Leads_Form_Builder {
 			'LPIG — Licence Professionnelle en Informatique de Gestion',
 			'Licence en Droit des Affaires',
 			'GBBA — Global Bachelor in Business Administration',
-			'Master en Systèmes & Réseaux',
+			'Master en Systèmes, Réseaux & Cloud',
 			'Master en Business Intelligence & Big Data',
 			'Master en Génie Logiciel',
 			'Master en Management de la Qualité',
 			'Master Banque et Ingénierie financière',
+			'Master en Comptabilité, Contrôle & Audit',
 			'Master en Management du Capital humain',
 			'Master en Marketing et Intelligence d\'Affaires',
+			'Master en Communication & Digital Business',
 			'Master en Supply Chain Management',
+			'MIB — Master in International Business',
 			'MBA Finance',
 			'MBA Management de Projets',
 			'MBA Gestion des Ressources Humaines',
 			'MBA Stratégies et Management des Organisations',
 			'DBA — Doctorat en Business Administration',
 			'BBA Pro — Bachelor en Administration des Affaires',
+		);
+	}
+
+	/**
+	 * Intitulés renommés : ancien => nouveau. Sert à reporter les plaquettes et
+	 * le programme des formulaires sur le nouvel intitulé lors de la mise à jour.
+	 */
+	public static function programmes_renommes() {
+		return array(
+			'Master en Systèmes & Réseaux' => 'Master en Systèmes, Réseaux & Cloud',
 		);
 	}
 

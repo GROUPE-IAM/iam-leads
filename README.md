@@ -2,7 +2,7 @@
 
 Plugin WordPress de génération et de gestion de leads pour le Groupe IAM.
 
-- **Version** : 1.9.1
+- **Version** : 1.9.2
 - **Prérequis** : WordPress 6.0+, PHP 8.0+
 - **Contexte** : thème Univet (RSTheme), builder Elementor, stack Docker + Nginx + WordPress FPM + MySQL 8.0
 
@@ -427,6 +427,11 @@ Le plugin se met à jour depuis les **Releases** du dépôt
    mise à jour, tables et synchronisations sont rejouées au premier passage dans l'admin.
 
 ## Journal des versions
+
+### 1.9.2
+
+- **Trois masters ajoutés** à la liste des programmes : Master en Comptabilité, Contrôle & Audit, Master en Communication & Digital Business et MIB — Master in International Business.
+- **« Master en Systèmes & Réseaux » devient « Master en Systèmes, Réseaux & Cloud »**, comme sur la brochure. À la mise à jour, la plaquette déjà associée et le programme des formulaires passent sur le nouvel intitulé ; les leads déjà reçus gardent l'ancien.
 
 ### 1.9.1
 

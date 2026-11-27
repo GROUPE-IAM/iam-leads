@@ -3,7 +3,7 @@
  * Plugin Name:       IAM Leads
  * Plugin URI:        https://groupeiam.com
  * Description:       Système de génération et de gestion de leads pour le Groupe IAM : constructeur de formulaires, capture UTM, téléchargement de plaquette, tableau de bord, CRM et notifications WhatsApp.
- * Version:           1.9.1
+ * Version:           1.9.2
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Update URI:        https://github.com/SofianeKOINDA/iam-leads
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'IAM_LEADS_VERSION', '1.9.1' );
+define( 'IAM_LEADS_VERSION', '1.9.2' );
 define( 'IAM_LEADS_FILE', __FILE__ );
 define( 'IAM_LEADS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'IAM_LEADS_URL', plugin_dir_url( __FILE__ ) );
@@ -153,6 +153,21 @@ function iam_leads_activate() {
  * cache des agrégats, version installée.
  */
 function iam_leads_synchroniser() {
+	// Programmes renommés : on reporte la plaquette et le programme des
+	// formulaires sur le nouvel intitulé avant d'écarter les orphelines.
+	global $wpdb;
+	foreach ( IAM_Leads_Form_Builder::programmes_renommes() as $ancien => $nouveau ) {
+		$reglages = (array) get_option( 'iam_leads_settings', array() );
+		if ( ! empty( $reglages['plaquettes'][ $ancien ] ) ) {
+			if ( empty( $reglages['plaquettes'][ $nouveau ] ) ) {
+				$reglages['plaquettes'][ $nouveau ] = $reglages['plaquettes'][ $ancien ];
+			}
+			unset( $reglages['plaquettes'][ $ancien ] );
+			update_option( 'iam_leads_settings', $reglages );
+		}
+		$wpdb->update( $wpdb->prefix . IAM_LEADS_TABLE_FORMS, array( 'programme' => $nouveau ), array( 'programme' => $ancien ) ); // phpcs:ignore
+	}
+
 	// La liste des programmes a pu changer depuis la création des formulaires.
 	IAM_Leads_Form_Builder::sync_programme_options();
 
